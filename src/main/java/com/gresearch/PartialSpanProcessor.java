@@ -47,7 +47,7 @@ public class PartialSpanProcessor implements SpanProcessor {
         scheduledDelayMs, TimeUnit.MILLISECONDS);
   }
 
-  private void heartbeat() {
+  public void heartbeat() {
     processEndedSpans();
 
     processActiveSpans();
