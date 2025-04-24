@@ -26,25 +26,25 @@ public class PartialSpanProcessor implements SpanProcessor {
   private final LogRecordExporter logRecordExporter;
   private final ConcurrentMap<String, Span> activeSpans;
   private final Deque<ReadableSpan> endedSpans;
-  private final int scheduledDelayMs;
+  private final int logExportInterval;
   private final ScheduledExecutorService scheduledExecutorService;
 
-  public PartialSpanProcessor(LogRecordExporter logRecordExporter, int scheduledDelayMs) {
+  public PartialSpanProcessor(LogRecordExporter logRecordExporter, int logExportInterval) {
     this.logRecordExporter = logRecordExporter;
     activeSpans = new ConcurrentHashMap<>();
     endedSpans = new ConcurrentLinkedDeque<>();
 
-    if (scheduledDelayMs <= 0) {
+    if (logExportInterval <= 0) {
       throw new IllegalArgumentException("scheduledDelayMillis must be greater than 0");
     }
-    this.scheduledDelayMs = scheduledDelayMs;
+    this.logExportInterval = logExportInterval;
     scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
     startWorkerThread();
   }
 
   private void startWorkerThread() {
-    scheduledExecutorService.scheduleAtFixedRate(this::heartbeat, scheduledDelayMs,
-        scheduledDelayMs, TimeUnit.MILLISECONDS);
+    scheduledExecutorService.scheduleAtFixedRate(this::heartbeat, logExportInterval,
+        logExportInterval, TimeUnit.MILLISECONDS);
   }
 
   public void heartbeat() {
@@ -79,7 +79,7 @@ public class PartialSpanProcessor implements SpanProcessor {
   }
 
   private Map<String, String> getHeartbeatLogRecordDataAttributes() {
-    return Map.of("partial.event", "heartbeat", "partial.frequency", scheduledDelayMs + "ms");
+    return Map.of("partial.event", "heartbeat", "partial.frequency", logExportInterval + "ms");
   }
 
   private static Map<String, String> getLogRecordDataAttributes() {
