@@ -4,6 +4,7 @@ import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.common.AttributesBuilder;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Context;
+import io.opentelemetry.proto.trace.v1.TracesData;
 import io.opentelemetry.sdk.common.CompletableResultCode;
 import io.opentelemetry.sdk.logs.export.LogRecordExporter;
 import io.opentelemetry.sdk.resources.Resource;
@@ -11,6 +12,7 @@ import io.opentelemetry.sdk.trace.ReadWriteSpan;
 import io.opentelemetry.sdk.trace.ReadableSpan;
 import io.opentelemetry.sdk.trace.SpanProcessor;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.Map;
@@ -26,25 +28,25 @@ public class PartialSpanProcessor implements SpanProcessor {
   private final LogRecordExporter logRecordExporter;
   private final ConcurrentMap<String, Span> activeSpans;
   private final Deque<ReadableSpan> endedSpans;
-  private final int logExportInterval;
+  private final int heartbeatIntervalMillis;
   private final ScheduledExecutorService scheduledExecutorService;
 
-  public PartialSpanProcessor(LogRecordExporter logRecordExporter, int logExportInterval) {
+  public PartialSpanProcessor(LogRecordExporter logRecordExporter, int heartbeatIntervalMillis) {
     this.logRecordExporter = logRecordExporter;
     activeSpans = new ConcurrentHashMap<>();
     endedSpans = new ConcurrentLinkedDeque<>();
 
-    if (logExportInterval <= 0) {
+    if (heartbeatIntervalMillis <= 0) {
       throw new IllegalArgumentException("scheduledDelayMillis must be greater than 0");
     }
-    this.logExportInterval = logExportInterval;
+    this.heartbeatIntervalMillis = heartbeatIntervalMillis;
     scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
     startWorkerThread();
   }
 
   private void startWorkerThread() {
-    scheduledExecutorService.scheduleAtFixedRate(this::heartbeat, logExportInterval,
-        logExportInterval, TimeUnit.MILLISECONDS);
+    scheduledExecutorService.scheduleAtFixedRate(this::heartbeat, heartbeatIntervalMillis,
+        heartbeatIntervalMillis, TimeUnit.MILLISECONDS);
   }
 
   public void heartbeat() {
@@ -79,7 +81,7 @@ public class PartialSpanProcessor implements SpanProcessor {
   }
 
   private Map<String, String> getHeartbeatLogRecordDataAttributes() {
-    return Map.of("partial.event", "heartbeat", "partial.frequency", logExportInterval + "ms");
+    return Map.of("partial.event", "heartbeat", "partial.frequency", heartbeatIntervalMillis + "ms");
   }
 
   private static Map<String, String> getLogRecordDataAttributes() {
@@ -97,8 +99,9 @@ public class PartialSpanProcessor implements SpanProcessor {
     partialLogRecordData.setInstrumentationScopeInfo(readableSpan.getInstrumentationScopeInfo());
     partialLogRecordData.setSpanContext(readableSpan.getSpanContext());
 
-    // TODO add proto serialization
-    partialLogRecordData.setBody("body");
+    TracesData tracesData = ProtoHelper.toTracesData(readableSpan);
+    String body = Base64.getEncoder().encodeToString(tracesData.toByteArray());
+    partialLogRecordData.setBody(body);
 
     AttributesBuilder attributesBuilder = Attributes.builder();
     attributesBuilder.putAll(readableSpan.getAttributes());

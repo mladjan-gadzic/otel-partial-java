@@ -15,7 +15,6 @@ import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
 public class Example {
 
   public static void main(String[] args) {
-    // Set up OTLP exporter
     OtlpGrpcSpanExporter spanExporter = OtlpGrpcSpanExporter.builder()
         .setEndpoint("http://localhost:4317") // OTLP gRPC endpoint of the Collector
         .build();
@@ -24,7 +23,6 @@ public class Example {
         .setEndpoint("http://localhost:4318/v1/logs") // OTLP HTTP endpoint of the Collector
         .build();
 
-    // Create Tracer Provider
     Resource resource = Resource.create(
         Attributes.of(AttributeKey.stringKey("service.name"), "my-service"));
     SdkTracerProvider tracerProvider = SdkTracerProvider.builder()
@@ -44,7 +42,7 @@ public class Example {
     Span span = tracer.spanBuilder("example-span").startSpan();
     span.addEvent("doing some work...");
     try {
-      Thread.sleep(500);
+      Thread.sleep(10000);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }

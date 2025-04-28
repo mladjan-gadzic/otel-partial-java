@@ -14,6 +14,9 @@
     <junit.version>5.11.4</junit.version>
     <opentelemetry.version>1.49.0</opentelemetry.version>
     <mockito.version>5.14.2</mockito.version>
+    <io.grpc.version>1.67.1</io.grpc.version>
+    <protobuf-java.version>3.25.3</protobuf-java.version>
+    <annotation-api.version>6.0.53</annotation-api.version>
   </properties>
 
   <dependencies>
@@ -42,6 +45,12 @@
     </dependency>
 
     <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-exporter-otlp-common</artifactId>
+      <version>${opentelemetry.version}</version>
+    </dependency>
+
+    <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
       <version>${junit.version}</version>
@@ -60,6 +69,39 @@
       <artifactId>mockito-core</artifactId>
       <version>${mockito.version}</version>
       <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-netty-shaded</artifactId>
+      <version>${io.grpc.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-protobuf</artifactId>
+      <version>${io.grpc.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-stub</artifactId>
+      <version>${io.grpc.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+      <version>${protobuf-java.version}</version>
+    </dependency>
+
+    <!-- needed for javax.annotation.Generated -->
+    <dependency>
+      <groupId>org.apache.tomcat</groupId>
+      <artifactId>annotations-api</artifactId>
+      <version>${annotation-api.version}</version>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
 </project>
